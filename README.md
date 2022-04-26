@@ -1,4 +1,4 @@
-Arweave + NEAR = LOVE
+Arweave + NEAR = ♥️
 =====================
 
 An excercise in connecting NEAR blockchain and Arweave storage. 

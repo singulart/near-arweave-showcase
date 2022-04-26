@@ -1,6 +1,5 @@
 import "regenerator-runtime/runtime";
 import React, { useState, useEffect, useRef } from "react";
-import { login, logout } from "./utils";
 
 // style sheets
 import "./global.css";
@@ -16,44 +15,40 @@ import {
   Row,
   Nav,
   Navbar,
-  NavDropdown,
   Alert,
 } from "react-bootstrap";
 import Arweave from "arweave";
 
 // Since v1.5.1 you're now able to call the init function for the web version without options. The current URL path will be used by default. This is recommended when running from a gateway.
 
-import ReactMarkdown from "react-markdown";
 import getConfig from "./config";
 const { networkId } = getConfig(process.env.NODE_ENV || "development");
 
 export default function App() {
   // state variables
-  const [bufferVal, changeBuffer] = useState([]);
-  const [arweaveKey, changeArweaveKey] = useState("");
-  const [getImage, changeGetImage] = useState("");
-  const [transacitonID, changeTransactionID] = useState("");
+  const [bufferVal, setBuffer] = useState([]);
+  const [arweaveKey, setArweaveKey] = useState("");
+  const [getImage, setGetImage] = useState("");
+  const [transacitonID, setTransactionID] = useState("");
 
   //references
   const idRef = useRef();
 
-  const arweave = Arweave.init({
+  const arweaveConfig = {
     host: "127.0.0.1",
     port: 1984,
     protocol: "http",
-  });
+  }
+
+  const arweave = Arweave.init(arweaveConfig);
 
   useEffect(() => {
     arweave.wallets.generate().then(async (key) => {
       console.log(key);
-      changeArweaveKey(key);
+      setArweaveKey(key); 
       // Mint some coins
       const address1 = await arweave.wallets.jwkToAddress(key);
       await arweave.api.get(`mint/${address1}/200000000000000000`);
-      // {
-      //     "kty": "RSA",
-      //     "n": "3WquzP5IVTIsv3XYJjfw5L-t4X34WoWHwOuxb9V8w...",
-      //     "e": ...
     });
   }, []);
 
@@ -61,15 +56,14 @@ export default function App() {
     event.preventDefault();
     console.log("event capture...");
     console.log(event);
-    // process file for ipfs
+    // process file for arweave
     console.log(event.target.files);
     const file = event.target.files[0];
     const reader = new FileReader();
 
     reader.readAsArrayBuffer(file);
     reader.onloadend = () => {
-      changeBuffer(reader.result);
-      console.log(reader.result);
+      setBuffer(reader.result); // update component state
     };
   };
 
@@ -83,7 +77,7 @@ export default function App() {
 
     await arweave.transactions.sign(transaction, arweaveKey);
 
-    changeTransactionID(transaction.id);
+    setTransactionID(transaction.id); // update component state
 
     console.log("transaction details");
 
@@ -96,25 +90,18 @@ export default function App() {
       console.log(
         `${uploader.pctComplete}% complete, ${uploader.uploadedChunks}/${uploader.totalChunks}`
       );
+      await fetch(`${arweaveConfig.protocol}://${arweaveConfig.host}:${arweaveConfig.port}/mine/666`); //mine 666 blocks to hail the Satan
     }
   };
 
   const getData = async () => {
     arweave.transactions.getStatus(idRef.current.value).then((res) => {
       console.log(res);
-      // {
-      //  status: 200,
-      //  confirmed: {
-      //    block_height: 140151,
-      //    block_indep_hash: 'OR1wue3oBSg3XWvH0GBlauAtAjBICVs2F_8YLYQ3aoAR7q6_3fFeuBOw7d-JTEdR',
-      //    number_of_confirmations: 20
-      //  }
-      //}
     });
 
     const result = await arweave.transactions.getData(idRef.current.value, {decode: true});
 
-    changeGetImage(URL.createObjectURL(new Blob([result], { type: 'image/png' })));
+    setGetImage(URL.createObjectURL(new Blob([result], { type: 'image/png' })));
     console.log(result.length);
 
   };
@@ -142,9 +129,9 @@ export default function App() {
         >
           {" "}
           <Card style={{ width: "50vw", padding: "3vw" }}>
-            <Card.Title>Step 1! ArLocal</Card.Title>
+            <Card.Title>Step 1. ArLocal</Card.Title>
             <Card.Body>
-              First, open up an additonal terminal, one used to run this
+              First, open up an additional terminal, one used to run this
               application the other to start your local Arweave Node. Then go to{" "}
               <a href={"https://github.com/textury/arlocal"}>ArLocal Github</a>{" "}
               and set up your local arweave node. You can do this by simply
@@ -159,7 +146,7 @@ export default function App() {
           style={{ marginTop: "3vh" }}
         >
           <Card style={{ width: "50vw", padding: "3vw" }}>
-            <Card.Title>Step 2!</Card.Title>
+            <Card.Title>Step 2.</Card.Title>
             <Form.Group controlId='formFile' className='mb-3'>
               <Form.Label>Choose a .png file from your computer</Form.Label>
               <Form.Control onChange={processPic} type='file' />
@@ -170,25 +157,10 @@ export default function App() {
             <Alert>{transacitonID}</Alert>
           </Card>
         </Row>
-        <Row className='d-flex justify-content-center'>
-          <Card style={{ width: "50vw", padding: "3vw", marginTop: "3vh" }}>
-            <Card.Body>
-              <Card.Title>Step 3! Mine Transaction</Card.Title>
-              <Card.Text>
-                After submitting your .png file visit <br></br>
-                <a href={"http://localhost:1984/mine"}>
-                  http://localhost:1984/mine
-                </a>{" "}
-                to mine your new transaction. Simply click on that link (modify
-                port as needed) and your block should be mined
-              </Card.Text>
-            </Card.Body>
-          </Card>
-        </Row>
 
         <Row className='d-flex justify-content-center'>
           <Card style={{ width: "50vw", padding: "3vw", marginTop: "3vh" }}>
-            <Card.Title>Step 4! Mint NFT</Card.Title>
+            <Card.Title>Step 3! Mint NFT</Card.Title>
             <Card.Body>
               <Card.Header>Enter the Following in Your Terminal</Card.Header>
               <Alert>ID=your-testnet-account-name.testnet</Alert>
@@ -205,7 +177,7 @@ export default function App() {
 
         <Row className='d-flex justify-content-center'>
           <Card style={{ width: "50vw", padding: "3vw", marginTop: "3vh" }}>
-            <Card.Title>Step 5! Get List of Minted Tokens</Card.Title>
+            <Card.Title>Step 4! Get List of Minted Tokens</Card.Title>
             <Card.Body>
               <Card.Header>Enter the Following in Your Terminal</Card.Header>
               <Alert>{`near view example-nft.testnet nft_tokens_for_owner '{"account_id": "'$ID'"}'`}</Alert>
@@ -218,7 +190,7 @@ export default function App() {
           style={{ marginTop: "10vh" }}
         >
           <Card style={{ width: "=50vw", marginBottom: "10vh" }}>
-            <Card.Title> Step 6! Retrieve Image with ID</Card.Title>
+            <Card.Title> Step 5! Retrieve Image with ID</Card.Title>
             <Container>
               <Row>
                 {" "}

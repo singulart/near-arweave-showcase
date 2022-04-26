@@ -1,5 +1,5 @@
 [package]
-name = "isonar-nft"
+name = "isonar_nft"
 version = "4.4.2"
 authors = ["isonar <isonar@alpha0.org>"]
 edition = "2018"

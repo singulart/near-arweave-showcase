@@ -199,7 +199,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "isonar-nft"
+name = "isonar_nft"
 version = "4.4.2"
 dependencies = [
  "near-contract-standards",
